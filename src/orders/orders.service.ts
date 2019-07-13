@@ -7,16 +7,54 @@ const axios = require('axios');
 export class OrdersService {
     constructor() { }
 
-    buy(symbol) {
+    //
+    // We will buy the symbol with a percentage of the currently held BTC
+    //
+    buy(symbol, percentage) {
+
         //
-        // First get the inside price
+        // The first task is to get our current BTC balance
         //
-        const tickerPriceUrl = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}BTC`;
+        const accountUrlBase = `https://api.binance.com/api/v3/account`;
         const headers =
         {
             'X-MBX-APIKEY': config.default.binApiKey,
             'Content-Type': 'application/x-www-form-urlencoded',
         };
+        const baseQueryStringAccount = `timestamp=${(new Date).getTime()}`;
+        const hmacAccount = crypto.createHmac('sha256', config.default.binSecretKey);
+        hmacAccount.update(baseQueryStringAccount);
+        const digestAccount = hmacAccount.digest('hex');
+        const signatureParamAccount = `&signature=${digestAccount}`;
+        const queryStringAccount = baseQueryStringAccount + signatureParamAccount;
+
+        const fullUrlAccount = accountUrlBase + '?' + queryStringAccount;
+        console.log(`fullUrlAccount: ${fullUrlAccount}`);
+
+        axios.get(fullUrlAccount, {headers: headers}).then(accountRes => {
+
+            if (accountRes.data && accountRes.data.balances) {
+                console.log("balances: ");
+                console.log(accountRes.data.balances);
+            }
+            console.log("Done getting account balances.");
+            return;
+        }).catch(e => {
+            console.log(e);
+        })
+
+        console.log("returning early...");
+        return;
+
+        //
+        // For order entry, First get the inside price
+        //
+        const tickerPriceUrl = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}BTC`;
+        //const headers =
+        //{
+        //    'X-MBX-APIKEY': config.default.binApiKey,
+        //    'Content-Type': 'application/x-www-form-urlencoded',
+        //};
         axios.get(tickerPriceUrl, null, {headers: headers}).then(tickerRes => {
 
             var qtyToBuy = 0;
