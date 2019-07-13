@@ -8,6 +8,8 @@ const axios = require('axios');
 export class OrdersService {
     constructor() { }
 
+    baseTradeUrl:string = 'https://api.binance.com/api/v3/order';
+
     //
     // We will buy the symbol with a percentage of the currently held BTC
     //
@@ -59,11 +61,6 @@ export class OrdersService {
                 }
 
                 //
-                // Now create the buy order
-                //
-                const baseTradeUrl = 'https://api.binance.com/api/v3/order/test';
-
-                //
                 // Create query string
                 //
                 const baseQueryString = `quantity=${qtyToBuy}&recvWindow=10000&symbol=${symbol}BTC&side=BUY&type=MARKET&timestamp=${(new Date).getTime()}`;
@@ -73,7 +70,7 @@ export class OrdersService {
                 const signatureParam = `&signature=${digest}`;
                 const queryString = baseQueryString + signatureParam;
 
-                const fullUrl = baseTradeUrl + '?' + queryString;
+                const fullUrl = this.baseTradeUrl + '?' + queryString;
 
                 console.log("POST to: " + fullUrl);
                 return axios.post(fullUrl, null, {
@@ -142,14 +139,9 @@ export class OrdersService {
 
                 var qtyToSell = 0;
                 if (tickerRes.data && tickerRes.data.askPrice) {
-                    qtyToSell = Math.floor(balanceDesired / tickerRes.data.bidPrice * (percentage / 100));
+                    qtyToSell = Math.floor(balanceDesired * (percentage / 100));
                 }
                 console.log(`qtyToSell: ${qtyToSell}`);
-
-                //
-                // Now create the buy order
-                //
-                const baseTradeUrl = 'https://api.binance.com/api/v3/order/test';
 
                 //
                 // Create query string
@@ -161,7 +153,7 @@ export class OrdersService {
                 const signatureParam = `&signature=${digest}`;
                 const queryString = baseQueryString + signatureParam;
 
-                const fullUrl = baseTradeUrl + '?' + queryString;
+                const fullUrl = this.baseTradeUrl + '?' + queryString;
 
                 console.log("POST to: " + fullUrl);
                 return axios.post(fullUrl, null, {
