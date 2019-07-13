@@ -23,4 +23,21 @@ export class OrdersController {
         console.log('Params: ' + query.symbol + ', ' + query.percentage);
         return this.ordersService.buy(query.symbol, query.percentage);
     }
+
+    @Get('/sell')
+    sell(@Query() query) {
+        console.log('Sell triggered!');
+        if (isNullOrUndefined(query.symbol) ||
+            isNullOrUndefined(query.percentage) ||
+            isNullOrUndefined(query.secretPhrase)) {
+            console.log("Error, missing query parameters");
+            return;
+        }
+        if (query.secretPhrase != config.default.entrySecret) {
+            console.log("Error, incorrect secret phrase!");
+            return;
+        }
+        console.log('Params: ' + query.symbol + ', ' + query.percentage);
+        return this.ordersService.sell(query.symbol, query.percentage);
+    }
 }
