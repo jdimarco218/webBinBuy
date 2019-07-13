@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as config from '../config/keys';
+import { isNullOrUndefined } from 'util';
 const crypto = require('crypto');
 const axios = require('axios');
 
@@ -31,67 +32,67 @@ export class OrdersService {
         const fullUrlAccount = accountUrlBase + '?' + queryStringAccount;
         console.log(`fullUrlAccount: ${fullUrlAccount}`);
 
-        axios.get(fullUrlAccount, {headers: headers}).then(accountRes => {
+        axios.get(fullUrlAccount, { headers: headers }).then(accountRes => {
 
             if (accountRes.data && accountRes.data.balances) {
                 console.log("balances: ");
-                console.log(accountRes.data.balances);
+                var balanceDesired = accountRes.data.balances.find(bal => {
+                    return bal["asset"] === "BTC";
+                });
+                if (isNullOrUndefined(balanceDesired)) {
+                    console.log(`Couldn't get account balance for BTC during buy entry`);
+                    return;
+                }
+                balanceDesired = balanceDesired.free
+                console.log(`Balance of BTC ${balanceDesired}`);
             }
             console.log("Done getting account balances.");
+
+            //
+            // For order entry, First get the inside price
+            //
+            const tickerPriceUrl = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}BTC`;
+            axios.get(tickerPriceUrl, null, { headers: headers }).then(tickerRes => {
+
+                var qtyToBuy = 0;
+                if (tickerRes.data && tickerRes.data.askPrice) {
+                    qtyToBuy = Math.floor(balanceDesired / tickerRes.data.askPrice * (percentage / 100));
+                }
+
+                //
+                // Now create the buy order
+                //
+                const baseTradeUrl = 'https://api.binance.com/api/v3/order/test';
+
+                //
+                // Create query string
+                //
+                const baseQueryString = `quantity=${qtyToBuy}&recvWindow=10000&symbol=${symbol}BTC&side=BUY&type=MARKET&timestamp=${(new Date).getTime()}`;
+                const hmac = crypto.createHmac('sha256', config.default.binSecretKey);
+                hmac.update(baseQueryString);
+                const digest = hmac.digest('hex');
+                const signatureParam = `&signature=${digest}`;
+                const queryString = baseQueryString + signatureParam;
+
+                const fullUrl = baseTradeUrl + '?' + queryString;
+
+                console.log("POST to: " + fullUrl);
+                return axios.post(fullUrl, null, {
+                    headers: headers
+                }).then(res => {
+                    console.log("Post successful.");
+                    return res.status;
+                }).catch(e => {
+                    console.log(e);
+                });
+            }).catch(e => {
+                console.log(e);
+            })
             return;
         }).catch(e => {
             console.log(e);
         })
 
-        console.log("returning early...");
-        return;
-
-        //
-        // For order entry, First get the inside price
-        //
-        const tickerPriceUrl = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}BTC`;
-        //const headers =
-        //{
-        //    'X-MBX-APIKEY': config.default.binApiKey,
-        //    'Content-Type': 'application/x-www-form-urlencoded',
-        //};
-        axios.get(tickerPriceUrl, null, {headers: headers}).then(tickerRes => {
-
-            var qtyToBuy = 0;
-            if (tickerRes.data && tickerRes.data.askPrice) {
-                // In case the price has moved up, let's only use 92% of our btc
-                qtyToBuy = Math.floor(config.default.btcBalance / tickerRes.data.askPrice * 0.92);
-            }
-
-            //
-            // Now create the buy order
-            //
-            const baseTradeUrl = 'https://api.binance.com/api/v3/order/test';
-
-            //
-            // Create query string
-            //
-            const baseQueryString = `quantity=${qtyToBuy}&recvWindow=10000&symbol=${symbol}BTC&side=BUY&type=MARKET&timestamp=${(new Date).getTime()}`;
-            const hmac = crypto.createHmac('sha256', config.default.binSecretKey);
-            hmac.update(baseQueryString);
-            const digest = hmac.digest('hex');
-            const signatureParam = `&signature=${digest}`;
-            const queryString = baseQueryString + signatureParam;
-
-            const fullUrl = baseTradeUrl + '?' + queryString;
-
-            console.log("POST to: " + fullUrl);
-            return axios.post(fullUrl, null, {
-                headers: headers
-            }).then(res => {
-                console.log("Post successful.");
-                return res.status;
-            }).catch(e => {
-                console.log(e);
-            });
-        }).catch(e => {
-            console.log(e);
-        })
 
     }
 }
