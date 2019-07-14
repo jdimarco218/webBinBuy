@@ -8,7 +8,7 @@ const axios = require('axios');
 export class OrdersService {
     constructor() { }
 
-    baseTradeUrl: string = 'https://api.binance.com/api/v3/order/test';
+    baseTradeUrl: string = 'https://api.binance.com/api/v3/order';
 
     //
     // We will buy the symbol with a percentage of the currently held BTC
@@ -22,13 +22,15 @@ export class OrdersService {
             // The first task is to get our current BTC balance
             //
             const accountUrlBase = `https://api.binance.com/api/v3/account`;
+            const binApiKey = config.default.binApiKey[i];
+            const binSecretKey = config.default.binSecretKey[i];
             const headers =
             {
-                'X-MBX-APIKEY': config.default.binApiKey[i],
+                'X-MBX-APIKEY': binApiKey,
                 'Content-Type': 'application/x-www-form-urlencoded',
             };
             const baseQueryStringAccount = `timestamp=${(new Date).getTime()}`;
-            const hmacAccount = crypto.createHmac('sha256', config.default.binSecretKey[i]);
+            const hmacAccount = crypto.createHmac('sha256', binSecretKey);
             hmacAccount.update(baseQueryStringAccount);
             const digestAccount = hmacAccount.digest('hex');
             const signatureParamAccount = `&signature=${digestAccount}`;
@@ -67,7 +69,7 @@ export class OrdersService {
                     // Create query string
                     //
                     const baseQueryString = `quantity=${qtyToBuy}&recvWindow=10000&symbol=${symbol}BTC&side=BUY&type=MARKET&timestamp=${(new Date).getTime()}`;
-                    const hmac = crypto.createHmac('sha256', config.default.binSecretKey[i]);
+                    const hmac = crypto.createHmac('sha256', binSecretKey);
                     hmac.update(baseQueryString);
                     const digest = hmac.digest('hex');
                     const signatureParam = `&signature=${digest}`;
@@ -107,13 +109,15 @@ export class OrdersService {
             // The first task is to get our current symbol balance
             //
             const accountUrlBase = `https://api.binance.com/api/v3/account`;
+            const binApiKey = config.default.binApiKey[i];
+            const binSecretKey = config.default.binSecretKey[i];
             const headers =
             {
-                'X-MBX-APIKEY': config.default.binApiKey[i],
+                'X-MBX-APIKEY': binApiKey,
                 'Content-Type': 'application/x-www-form-urlencoded',
             };
             const baseQueryStringAccount = `timestamp=${(new Date).getTime()}`;
-            const hmacAccount = crypto.createHmac('sha256', config.default.binSecretKey[i]);
+            const hmacAccount = crypto.createHmac('sha256', binSecretKey);
             hmacAccount.update(baseQueryStringAccount);
             const digestAccount = hmacAccount.digest('hex');
             const signatureParamAccount = `&signature=${digestAccount}`;
@@ -153,7 +157,7 @@ export class OrdersService {
                     // Create query string
                     //
                     const baseQueryString = `quantity=${qtyToSell}&recvWindow=10000&symbol=${symbol}BTC&side=SELL&type=MARKET&timestamp=${(new Date).getTime()}`;
-                    const hmac = crypto.createHmac('sha256', config.default.binSecretKey[i]);
+                    const hmac = crypto.createHmac('sha256', binSecretKey);
                     hmac.update(baseQueryString);
                     const digest = hmac.digest('hex');
                     const signatureParam = `&signature=${digest}`;
