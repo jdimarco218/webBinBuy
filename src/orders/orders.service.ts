@@ -8,7 +8,7 @@ const axios = require('axios');
 export class OrdersService {
     constructor() { }
 
-    baseTradeUrl:string = 'https://api.binance.com/api/v3/order';
+    baseTradeUrl:string = 'https://api.binance.com/api/v3/order/test';
 
     //
     // We will buy the symbol with a percentage of the currently held BTC
